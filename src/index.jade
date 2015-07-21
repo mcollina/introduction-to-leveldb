@@ -1,0 +1,187 @@
+doctype html
+html
+  head
+    meta(charset='utf-8')
+    meta(name='viewport', content='width=device-width, initial-scale=1, maximum-scale=1')
+    title Introduction to LevelDB
+
+    link(rel='stylesheet', type='text/css', href='build/build.css')
+
+  body
+
+    article
+
+      section
+        h1 Introduction to LevelDB
+        img(src="images/leveldb.svg")
+        h2 by&nbsp;
+          a(href="http://twitter.com/matteocollina") Matteo Collina
+
+      section
+        img(src="images/keys-values-pairs.png" style="height: 90%")
+
+      section
+        h2 Get and Put
+        pre
+          code(data-bespoke-autorun).language-javascript.
+            var db = level('db1')
+
+            db.put('hello', 'world', function (err) {
+              db.get('hello', function (err, value) {
+                alert(value)
+                db.close()
+              })
+            })
+
+      section
+        img(src="images/put.png" style="height: 90%")
+
+      section
+        img(src="images/get.png" style="height: 90%")
+
+      section
+        img(src="images/put-update.png" style="height: 90%")
+
+      section
+        h2 Update
+        pre
+          code(data-bespoke-autorun).language-javascript.
+            var db = level('db1')
+
+            db.get('hello', function (err, value) {
+              alert(value)
+              db.put('hello', 'matteo', function (err) {
+                db.get('hello', function (err, value) {
+                  alert(value)
+                  db.close()
+                })
+              })
+            })
+
+      section
+        h2 Streams
+        pre
+          code(data-bespoke-autorun).language-javascript.
+            var db = level('db1')
+
+            var stream = db.createReadStream()
+
+            stream.on('data', function (chunk) {
+              alert(JSON.stringify(chunk))
+            })
+
+            stream.on('end', function () {
+              alert('ended')
+              db.close()
+            })
+
+      section
+        img(src="images/iterator.png" style="height: 90%")
+
+      section
+        img(src="images/iterator-reverse.png" style="height: 90%")
+
+      section
+        h2 Batch!
+        pre
+          code(data-bespoke-autorun).language-javascript.
+            var db = level('db1')
+
+            db.batch([{
+              key: 'hello1', value: 'abcde'
+            }, {
+              key: 'the answer', value: '42'
+            }], function (err) {
+              alert('all inserted!')
+              db.close()
+            })
+
+      section
+        h2 Streams
+        pre
+          code(data-bespoke-autorun).language-javascript.
+            var db = level('db1')
+
+            var stream = db.createReadStream()
+
+            stream.on('data', function (chunk) {
+              alert(JSON.stringify(chunk))
+            })
+
+            stream.on('end', function () {
+              db.close()
+            })
+
+      section
+        h2 Stream, reverse order
+        pre
+          code(data-bespoke-autorun).language-javascript.
+            var db = level('db1')
+
+            var stream = db.createReadStream({ reverse: true })
+
+            stream.on('data', function (chunk) {
+              alert(JSON.stringify(chunk))
+            })
+
+            stream.on('end', function () {
+              db.close()
+            })
+
+      section
+        img(src="images/index-store.png" style="height: 90%")
+
+      section
+        img(src="images/index-lookup.png" style="height: 90%")
+
+      section
+        h2 Store an Object
+        pre
+          code(data-bespoke-autorun).language-javascript.
+            var db = level('obj-store')
+            var batch = [
+              { date: '1994-11-05', body: 'my body' },
+              { date: '2003-07-22', body: 'my body2' },
+              { date: '2015-07-23', body: 'my body3' }
+            ].reduce(function (acc, article) {
+              article.id = uuid.v4()
+              var key = 'art:' + article.id
+              acc.push({ key: key, value: JSON.stringify(article), type: 'put' })
+              acc.push({ key: 'date:' + article.date + ':' + article.id,
+                         value: key, type: 'put' })
+              return acc
+            }, [])
+            db.batch(batch, function (err) { alert('all inserted'); db.close() })
+
+      section
+        h2 Lookup
+        pre
+          code(data-bespoke-autorun).language-javascript.
+            var db = level('obj-store')
+            db.createReadStream({ gte: 'date:2003', lt: 'date:2017' })
+              .pipe(through.obj(function (obj, enc, cb) {
+                db.get(obj.value, cb)
+              }))
+              .on('data', function (data) {
+                alert(JSON.stringify(data))
+              })
+              .on('end', db.close.bind(db))
+
+      section
+        img(src="images/internals.png" style="width: 90%")
+
+      section.full-imgs
+        img(src='images/me.png' style="width: 90%")
+
+      section.full-imgs
+        img(src='images/nearform.svg')
+
+      section
+        h1 Thanks!
+        br
+        h3 <a href="mailto:hello@matteocollina.com">hello@matteocollina.com</a>
+        h3 <a href="http://twitter.com/matteocollina">@matteocollina</a> on Twitter
+        h3 <a href="http://www.matteocollina.com">www.matteocollina.com</a>
+
+
+    script(src='build/build.js')
